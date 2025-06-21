@@ -218,6 +218,7 @@
   <!-- Audio -->
   <audio id="bg-music" src="https://res.cloudinary.com/dvda53sdv/video/upload/v1750512387/gameBG_blij1p.mp3" loop></audio>
   <audio id="slurp-sound" src="https://res.cloudinary.com/dvda53sdv/video/upload/v1750512386/slurp_p6izjp.mp3"></audio>
+  <audio id="meow-sound" src="https://res.cloudinary.com/dvda53sdv/video/upload/v1750512802/meowrgh_cv0kfo.mp3"></audio>
 
   <script>
     let hunger = 100;
@@ -241,6 +242,7 @@
     const penaltyDisplay = document.getElementById("penalty");
     const bgMusic = document.getElementById("bg-music");
     const slurpSound = document.getElementById("slurp-sound");
+    const meowSound = document.getElementById("meow-sound");
 
     window.addEventListener('click', () => {
       bgMusic.volume = 0.2;
@@ -352,6 +354,9 @@
         renderHearts();
         penalty = true;
         penaltyDisplay.style.display = "block";
+
+        meowSound.currentTime = 0;
+        meowSound.play();
 
         setTimeout(() => {
           penalty = false;
