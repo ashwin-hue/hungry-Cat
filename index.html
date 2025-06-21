@@ -1,0 +1,336 @@
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Milkshake Cat Feeder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&family=Pacifico&display=swap" rel="stylesheet">
+    <style>
+        body {
+        font-family: 'Quicksand', sans-serif;
+        background-color: #FFD6E0;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        overflow: hidden;
+        }
+
+        #game-container {
+        position: relative;
+        width: 100%;
+        max-width: 500px;
+        height: 90vh;
+        background-color: #FFF9EC;
+        border-radius: 25px;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+        box-sizing: border-box;
+        }
+
+        h1 {
+        font-family: 'Pacifico', cursive;
+        color: #FF85A2;
+        font-size: 2.5rem;
+        text-align: center;
+        margin: 0;
+        }
+
+        #stats-bar {
+        display: flex;
+        justify-content: space-between;
+        margin: 10px 0;
+        }
+
+        #points, #timer {
+        color: #FF85A2;
+        font-weight: 600;
+        font-size: 1.2rem;
+        }
+
+        #hunger-container {
+        width: 100%;
+        height: 25px;
+        background-color: #FFE5E5;
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+        }
+
+        #hunger-bar {
+        height: 100%;
+        width: 100%;
+        background: linear-gradient(90deg, #FF85A2, #FFB6C1);
+        transition: width 0.3s ease;
+        }
+
+        #hunger-label {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-weight: bold;
+        }
+
+        #cat-container {
+        width: 200px;
+        height: 200px;
+        margin: 15px auto;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        }
+
+        /* Default closed-mouth cat */
+        #cat-container.cat-idle {
+        background-image: url('https://res.cloudinary.com/dvda53sdv/image/upload/v1750509775/CATIMAGE_dfatfk.png'); /* closed mouth cat */
+        }
+
+        /* Mouth open cat */
+        #cat-container.mouth-open {
+        background-image: url('https://res.cloudinary.com/dvda53sdv/image/upload/v1750510679/mouthopen_ov3zef.png'); /* open mouth cat */
+        }
+
+        #item-table {
+        width: 100%;
+        height: 150px;
+        background: #ffe5e5;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        margin-top: 15px;
+        }
+
+        .item {
+        width: 90px;
+        height: 90px;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        position: absolute;
+        cursor: pointer;
+        transition: transform 0.3s;
+        }
+
+        .item:hover {
+        transform: scale(1.1);
+        }
+
+        .milkshake {
+        background-image: url('https://res.cloudinary.com/dvda53sdv/image/upload/v1750509775/MSIMAGE_eyeotx.png');
+        }
+
+        .bomb {
+        background-image: url('https://res.cloudinary.com/dvda53sdv/image/upload/v1750509775/CACIMAGE_ptmd8e.png');
+        }
+
+        #penalty {
+        display: none;
+        background: red;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 12px;
+        position: absolute;
+        top: 40%;
+        left: 50%;
+        transform: translateX(-50%);
+        font-weight: bold;
+        z-index: 5;
+        }
+
+        #game-over {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255,255,255,0.95);
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        border-radius: 25px;
+        }
+
+        button {
+        background-color: #FF85A2;
+        color: white;
+        border: none;
+        padding: 10px 30px;
+        font-size: 1rem;
+        border-radius: 30px;
+        cursor: pointer;
+        font-weight: bold;
+        }
+    </style>
+    </head>
+    <body>
+    <div id="game-container">
+        <h1>Milkshake Cat Feeder</h1>
+        <div id="stats-bar">
+        <div id="points">Points: 0</div>
+        <div id="timer">Time: 0s</div>
+        </div>
+
+        <div id="hunger-container">
+        <div id="hunger-bar"></div>
+        <div id="hunger-label">HUNGER</div>
+        </div>
+
+        <div id="cat-container" class="cat-idle"></div>
+
+        <div id="item-table"></div>
+
+        <div id="penalty">No Feeding for 5 Seconds!</div>
+
+        <div id="game-over">
+        <h2>Game Over</h2>
+        <p>You scored <span id="final-points">0</span> points in <span id="final-time">0</span> seconds.</p>
+        <button onclick="initGame()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        let hunger = 100;
+        let points = 0;
+        let gameTime = 0;
+        let penalty = false;
+        let gameInterval, hungerInterval, itemTimeout;
+        let currentItem = null;
+
+        const hungerBar = document.getElementById("hunger-bar");
+        const hungerLabel = document.getElementById("hunger-label");
+        const pointsDisplay = document.getElementById("points");
+        const timeDisplay = document.getElementById("timer");
+        const itemTable = document.getElementById("item-table");
+        const gameOver = document.getElementById("game-over");
+        const finalPoints = document.getElementById("final-points");
+        const finalTime = document.getElementById("final-time");
+        const penaltyDisplay = document.getElementById("penalty");
+        const cat = document.getElementById("cat-container");
+
+        function initGame() {
+        hunger = 100;
+        points = 0;
+        gameTime = 0;
+        penalty = false;
+        gameOver.style.display = "none";
+        pointsDisplay.textContent = `Points: ${points}`;
+        timeDisplay.textContent = `Time: ${gameTime}s`;
+        hungerBar.style.width = hunger + "%";
+        hungerLabel.textContent = "HUNGER";
+        cat.className = "cat-idle";
+        clearItem();
+
+        clearInterval(hungerInterval);
+        clearInterval(gameInterval);
+        clearTimeout(itemTimeout);
+
+        hungerInterval = setInterval(decreaseHunger, 200);
+        gameInterval = setInterval(() => {
+            gameTime++;
+            timeDisplay.textContent = `Time: ${gameTime}s`;
+        }, 1000);
+
+        createItem();
+        }
+
+        function decreaseHunger() {
+        if (penalty) return;
+        hunger -= 1;
+        hungerBar.style.width = hunger + "%";
+
+        if (hunger > 50) {
+            hungerLabel.textContent = "HUNGER";
+        } else if (hunger > 20) {
+            hungerLabel.textContent = "HUNGRY!";
+        } else {
+            hungerLabel.textContent = "STARVING!!";
+        }
+
+        if (hunger <= 0) {
+            endGame();
+        }
+        }
+
+        function createItem() {
+        clearItem();
+        clearTimeout(itemTimeout);
+
+        const type = Math.random() < 0.7 ? "milkshake" : "bomb";
+        const item = document.createElement("div");
+        item.classList.add("item", type);
+        item.addEventListener("click", () => feedCat(type));
+        itemTable.appendChild(item);
+        currentItem = item;
+
+        itemTimeout = setTimeout(() => {
+            if (!penalty) {
+            createItem();
+            }
+        }, 2000);
+        }
+
+        function clearItem() {
+        if (currentItem && currentItem.parentNode) {
+            currentItem.parentNode.removeChild(currentItem);
+            currentItem = null;
+        }
+        }
+
+        function feedCat(type) {
+        if (penalty) return;
+        clearTimeout(itemTimeout);
+        clearItem();
+
+        if (type === "milkshake") {
+            hunger = Math.min(100, hunger + 15);
+            hungerBar.style.width = hunger + "%";
+            points += 10;
+            pointsDisplay.textContent = `Points: ${points}`;
+
+            // Open cat mouth
+            cat.className = "mouth-open";
+            setTimeout(() => {
+            cat.className = "cat-idle";
+            }, 500);
+
+            setTimeout(createItem, 500);
+        } else {
+            penalty = true;
+            penaltyDisplay.style.display = "block";
+            cat.className = "cat-idle";
+
+            setTimeout(() => {
+            penalty = false;
+            penaltyDisplay.style.display = "none";
+            createItem();
+            }, 5000);
+        }
+        }
+
+        function endGame() {
+        clearInterval(hungerInterval);
+        clearInterval(gameInterval);
+        clearTimeout(itemTimeout);
+        clearItem();
+        gameOver.style.display = "flex";
+        finalPoints.textContent = points;
+        finalTime.textContent = gameTime;
+        cat.className = "cat-idle";
+        }
+
+        window.onload = initGame;
+    </script>
+    </body>
+    </html>
