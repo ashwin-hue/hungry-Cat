@@ -205,9 +205,7 @@
     </div>
 
     <div id="cat-container" class="cat-idle"></div>
-
     <div id="item-table"></div>
-
     <div id="penalty">No Feeding for 5 Seconds!</div>
 
     <div id="game-over">
@@ -216,6 +214,10 @@
       <button onclick="initGame()">Play Again</button>
     </div>
   </div>
+
+  <!-- Audio -->
+  <audio id="bg-music" src="https://res.cloudinary.com/dvda53sdv/video/upload/v1750512387/gameBG_blij1p.mp3" loop></audio>
+  <audio id="slurp-sound" src="https://res.cloudinary.com/dvda53sdv/video/upload/v1750512386/slurp_p6izjp.mp3"></audio>
 
   <script>
     let hunger = 100;
@@ -237,6 +239,13 @@
     const cat = document.getElementById("cat-container");
     const livesDisplay = document.getElementById("lives");
     const penaltyDisplay = document.getElementById("penalty");
+    const bgMusic = document.getElementById("bg-music");
+    const slurpSound = document.getElementById("slurp-sound");
+
+    window.addEventListener('click', () => {
+      bgMusic.volume = 0.2;
+      bgMusic.play().catch(() => {});
+    }, { once: true });
 
     function renderHearts() {
       livesDisplay.innerHTML = '';
@@ -330,6 +339,9 @@
         pointsDisplay.textContent = `Points: ${points}`;
 
         cat.className = "mouth-open";
+        slurpSound.currentTime = 0;
+        slurpSound.play();
+
         setTimeout(() => {
           cat.className = "cat-idle";
         }, 500);
